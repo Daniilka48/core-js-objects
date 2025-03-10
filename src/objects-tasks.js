@@ -125,8 +125,24 @@ function makeImmutable(obj) {
  *    makeWord({ a: [0, 1], b: [2, 3], c: [4, 5] }) => 'aabbcc'
  *    makeWord({ H:[0], e: [1], l: [2, 3, 8], o: [4, 6], W:[5], r:[7], d:[9]}) => 'HelloWorld'
  */
-function makeWord(/* lettersObject */) {
-  throw new Error('Not implemented');
+function makeWord(lettersObject) {
+  if (Object.keys(lettersObject).length === 0) {
+    return '';
+  }
+
+  const maxPosition = Math.max(...Object.values(lettersObject).flat());
+
+  const resultArray = new Array(maxPosition + 1).fill('');
+
+  return Object.entries(lettersObject)
+    .reduce((result, [letter, positions]) => {
+      const newResult = [...result];
+      positions.forEach((position) => {
+        newResult[position] = letter;
+      });
+      return newResult;
+    }, resultArray)
+    .join('');
 }
 
 /**
@@ -143,8 +159,35 @@ function makeWord(/* lettersObject */) {
  *    sellTickets([25, 25, 50]) => true
  *    sellTickets([25, 100]) => false (The seller does not have enough money to give change.)
  */
-function sellTickets(/* queue */) {
-  throw new Error('Not implemented');
+function sellTickets(queue) {
+  let count25 = 0;
+  let count50 = 0;
+
+  return queue.every((bill) => {
+    if (bill === 25) {
+      count25 += 1;
+      return true;
+    }
+    if (bill === 50) {
+      if (count25 === 0) return false;
+      count25 -= 1;
+      count50 += 1;
+      return true;
+    }
+    if (bill === 100) {
+      if (count50 > 0 && count25 > 0) {
+        count50 -= 1;
+        count25 -= 1;
+        return true;
+      }
+      if (count25 >= 3) {
+        count25 -= 3;
+        return true;
+      }
+      return false;
+    }
+    return false;
+  });
 }
 
 /**
@@ -160,8 +203,13 @@ function sellTickets(/* queue */) {
  *    console.log(r.height);      // => 20
  *    console.log(r.getArea());   // => 200
  */
-function Rectangle(/* width, height */) {
-  throw new Error('Not implemented');
+function Rectangle(width, height) {
+  this.width = width;
+  this.height = height;
+
+  this.getArea = function getArea() {
+    return this.width * this.height;
+  };
 }
 
 /**
@@ -174,8 +222,8 @@ function Rectangle(/* width, height */) {
  *    [1,2,3]   =>  '[1,2,3]'
  *    { height: 10, width: 20 } => '{"height":10,"width":20}'
  */
-function getJSON(/* obj */) {
-  throw new Error('Not implemented');
+function getJSON(obj) {
+  return JSON.stringify(obj);
 }
 
 /**
@@ -189,8 +237,10 @@ function getJSON(/* obj */) {
  *    const r = fromJSON(Circle.prototype, '{"radius":10}');
  *
  */
-function fromJSON(/* proto, json */) {
-  throw new Error('Not implemented');
+function fromJSON(proto, json) {
+  const obj = JSON.parse(json);
+  Object.setPrototypeOf(obj, proto);
+  return obj;
 }
 
 /**

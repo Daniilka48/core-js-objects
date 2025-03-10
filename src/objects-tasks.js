@@ -269,8 +269,13 @@ function fromJSON(proto, json) {
  *      { country: 'Russia',  city: 'Saint Petersburg' }
  *    ]
  */
-function sortCitiesArray(/* arr */) {
-  throw new Error('Not implemented');
+function sortCitiesArray(arr) {
+  return arr.sort((a, b) => {
+    if (a.country === b.country) {
+      return a.city.localeCompare(b.city);
+    }
+    return a.country.localeCompare(b.country);
+  });
 }
 
 /**
@@ -303,8 +308,20 @@ function sortCitiesArray(/* arr */) {
  *    "Poland" => ["Lodz"]
  *   }
  */
-function group(/* array, keySelector, valueSelector */) {
-  throw new Error('Not implemented');
+function group(array, keySelector, valueSelector) {
+  const map = new Map();
+
+  array.forEach((item) => {
+    const key = keySelector(item);
+    const value = valueSelector(item);
+
+    if (!map.has(key)) {
+      map.set(key, []);
+    }
+
+    map.get(key).push(value);
+  });
+  return map;
 }
 
 /**
@@ -362,32 +379,98 @@ function group(/* array, keySelector, valueSelector */) {
  */
 
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  elementValue: '',
+  idValue: '',
+  classValue: '',
+  attrValue: '',
+  pseudoClassValue: '',
+  pseudoElementValue: '',
+  combinatorValue: '',
+  orderValue: 0,
+
+  element(value) {
+    if (this.elementValue)
+      throw new Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+    this.checkOrder(1);
+    const newBuilder = Object.create(this);
+    newBuilder.elementValue = value;
+    newBuilder.orderValue = 1;
+    return newBuilder;
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    if (this.idValue)
+      throw new Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+    this.checkOrder(2);
+    const newBuilder = Object.create(this);
+    newBuilder.idValue = `#${value}`;
+    newBuilder.orderValue = 2;
+    return newBuilder;
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    this.checkOrder(3);
+    const newBuilder = Object.create(this);
+    newBuilder.classValue = this.classValue
+      ? `${this.classValue}.${value}`
+      : `.${value}`;
+    newBuilder.orderValue = 3;
+    return newBuilder;
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    this.checkOrder(4);
+    const newBuilder = Object.create(this);
+    newBuilder.attrValue = this.attrValue
+      ? `${this.attrValue}[${value}]`
+      : `[${value}]`;
+    newBuilder.orderValue = 4;
+    return newBuilder;
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    this.checkOrder(5);
+    const newBuilder = Object.create(this);
+    newBuilder.pseudoClassValue = this.pseudoClassValue
+      ? `${this.pseudoClassValue}:${value}`
+      : `:${value}`;
+    newBuilder.orderValue = 5;
+    return newBuilder;
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    if (this.pseudoElementValue)
+      throw new Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+    this.checkOrder(6);
+    const newBuilder = Object.create(this);
+    newBuilder.pseudoElementValue = `::${value}`;
+    newBuilder.orderValue = 6;
+    return newBuilder;
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  combine(selector1, combinator, selector2) {
+    const newBuilder = Object.create(this);
+    newBuilder.combinatorValue = `${selector1.stringify()} ${combinator} ${selector2.stringify()}`;
+    return newBuilder;
+  },
+
+  checkOrder(newOrder) {
+    if (this.orderValue > newOrder) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    }
+  },
+
+  stringify() {
+    if (this.combinatorValue) return this.combinatorValue;
+    return `${this.elementValue}${this.idValue}${this.classValue}${this.attrValue}${this.pseudoClassValue}${this.pseudoElementValue}`;
   },
 };
 
